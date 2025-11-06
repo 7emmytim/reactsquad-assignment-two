@@ -1,33 +1,63 @@
 import { SearchProducts } from "@/features";
-import { withLayout } from "@/hocs";
+import { withLayout, withSEO } from "@/hocs";
 import { GetServerSideProps } from "next";
 
-export default withLayout(SearchProducts);
+export default withLayout(
+  withSEO({ title: "Search Products" })(SearchProducts)
+);
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const query = (context.query.q as string) || "";
+export const getServerSideProps: GetServerSideProps = async ({
+  query,
+  res,
+}) => {
+  const q = (query.q as string) || "";
 
-  const res = await fetch(
-    `https://dummyjson.com/products/search?q=${encodeURIComponent(query)}`,
-    {
-      headers: {
-        "Cache-Control": "public, max-age=60, s-maxage=60",
-      },
+  res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60");
+
+  try {
+    if (!q) {
+      return {
+        props: {
+          query: q,
+          products: [],
+          categories: null,
+        },
+      };
     }
-  );
 
-  if (!res.ok) {
+    const productResponse = await fetch(
+      `https://dummyjson.com/products/search?q=${encodeURIComponent(q)}`
+    );
+
+    if (!productResponse.ok) throw new Error("Failed to fetch products");
+
+    const productData = await productResponse.json();
+    const products: Product[] = productData.products ?? [];
+
+    const categories =
+      products.length === 0
+        ? await fetch("https://dummyjson.com/products/categories")
+            .then((r) => r.json())
+            .catch(() => [])
+        : null;
+
     return {
-      notFound: true,
+      props: {
+        query: q,
+        products,
+        categories,
+      },
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return {
+      props: {
+        query: q,
+        products: [],
+        categories: null,
+        error: message,
+      },
     };
   }
-
-  const data = await res.json();
-
-  return {
-    props: {
-      products: data.products ?? [],
-      query,
-    },
-  };
 };

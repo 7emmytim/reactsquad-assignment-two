@@ -1,45 +1,55 @@
 import { ProductDetails } from "@/features";
-import { withLayout } from "@/hocs";
+import { withLayout, withSEO } from "@/hocs";
 import { GetStaticProps } from "next";
 
-export default withLayout(ProductDetails);
+export default withLayout(
+  withSEO({ title: "Product Details" })(ProductDetails)
+);
 
 export const getStaticPaths = async () => {
-  // const res = await fetch("https://dummyjson.com/products");
-  // const products: Product[] = await res.json();
+  const res = await fetch("https://dummyjson.com/products?limit=5");
+  const data: { products: Product[] } = await res.json();
 
-  // const paths = products.map((product) => ({
-  //   params: { id: product.id.toString() },
-  // }));
+  const paths = data.products.map((product) => ({
+    params: { id: product.id.toString() },
+  }));
 
   return {
-    paths: [
-      { params: { id: "1" } },
-      { params: { id: "2" } },
-      { params: { id: "3" } },
-      { params: { id: "4" } },
-      { params: { id: "5" } },
-    ],
+    paths,
     fallback: "blocking",
   };
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const id = params?.id;
-  const res = await fetch(`https://dummyjson.com/products/${id}`);
+  try {
+    const id = params?.id;
 
-  if (!res.ok) {
+    if (!id) {
+      return { notFound: true };
+    }
+
+    const productResponse = await fetch(`https://dummyjson.com/products/${id}`);
+    if (!productResponse.ok) throw new Error("Failed to fetch product");
+
+    const product: Product = await productResponse.json();
+
+    const relatedResponse = await fetch(
+      `https://dummyjson.com/products/category/${encodeURIComponent(
+        product.category
+      )}?limit=4`
+    );
+
+    const data: { products: Product[] } = await relatedResponse.json();
+    const products = data.products.filter((product) => `${product.id}` !== id);
+
     return {
-      notFound: true,
+      props: {
+        product,
+        products,
+      },
+      revalidate: 300,
     };
+  } catch {
+    return { notFound: true };
   }
-
-  const product = await res.json();
-
-  return {
-    props: {
-      product,
-    },
-    revalidate: 300,
-  };
 };

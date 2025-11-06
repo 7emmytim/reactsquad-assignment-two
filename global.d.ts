@@ -41,3 +41,9 @@ type Product = {
   images: string[]
   thumbnail: string
 }
+
+type Category = {
+  slug: string
+  name: string
+  url: string
+}

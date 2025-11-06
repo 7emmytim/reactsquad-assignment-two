@@ -1,24 +1,20 @@
-import Image from "next/image";
-import Link from "next/link";
+import { EmptyComponent, ErrorComponent } from "@/components";
+import { ProductsComponent } from "./products-component";
 
-export function Home({ products }: { products: Product[] }) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-      {products.map(({ id, thumbnail, title }) => {
-        return (
-          <Link
-            href={`/product/${id}`}
-            key={id}
-            className="rounded-lg cursor-pointer p-3 hover:shadow border-[0.5px] border-gray-300"
-          >
-            <div className="aspect-square relative max-w-48 mx-auto">
-              <Image src={thumbnail} alt={title} fill />
-            </div>
+export function Home({
+  products,
+  error,
+}: {
+  products: Product[];
+  error?: string;
+}) {
+  if (error) {
+    return <ErrorComponent error={error} />;
+  }
 
-            <p className="text-xs text-center mt-10 truncate">{title}</p>
-          </Link>
-        );
-      })}
-    </div>
-  );
+  if (!products.length) {
+    return <EmptyComponent message="No product(s) to show ):" />;
+  }
+
+  return <ProductsComponent products={products} />;
 }
