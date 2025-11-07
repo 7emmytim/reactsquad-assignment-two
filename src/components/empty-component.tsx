@@ -1,3 +1,7 @@
-export function EmptyComponent({ message }: { message: string }) {
+export function EmptyComponent({
+  message = "Nothing to show):",
+}: {
+  message?: string;
+}) {
   return <div>{message}</div>;
 }
