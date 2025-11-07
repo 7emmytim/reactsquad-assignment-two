@@ -45,12 +45,12 @@ export async function fetchProductById(id: string): Promise<Product> {
   return res.json();
 }
 
-export async function fetchRelatedProducts(category: string, currentId: string): Promise<Product[]> {
+export async function fetchRelatedProducts(category: string, productId: string): Promise<Product[]> {
   const res = await fetch(
     `${BASE_URL}/category/${encodeURIComponent(category)}?limit=4`
   );
   if (!res.ok) throw new Error("Failed to fetch related products");
 
   const data: { products: Product[] } = await res.json();
-  return data.products.filter((p) => `${p.id}` !== currentId);
+  return data.products.filter(({ id }) => `${id}` !== productId);
 }

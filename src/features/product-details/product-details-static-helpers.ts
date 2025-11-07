@@ -3,7 +3,7 @@ import type { GetStaticPaths, GetStaticProps } from "next";
 
 export const getProductStaticPaths: GetStaticPaths = async () => {
   try {
-    const products = await fetchProducts();
+    const products = await fetchProducts({ limit: 5 });
 
     const paths = products.map((product) => ({
       params: { id: product.id.toString() },
